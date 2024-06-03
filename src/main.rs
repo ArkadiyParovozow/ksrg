@@ -1,6 +1,5 @@
 
-mod de_int_byte;
-mod de_int_long;
+mod de_int;
 
 pub const ENDIAN:&str = "be";
 fn main() {

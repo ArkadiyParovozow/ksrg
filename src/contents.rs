@@ -51,6 +51,9 @@ where
     // The function is only called if contents variable is non null.
     Ok(deserializer.deserialize_any(ContentsVisitor)?)
 }
+#[cfg(test)]
+mod tests {
+    use super::*;
 #[test]
     fn simple_de() {
         let yaml = "
@@ -59,7 +62,9 @@ where
     ";
 
     let deserialized_content = serde_yaml::from_str::<Contents>(&yaml);
-    assert!(deserialized_content.is_ok());
+    assert!(
+        matches!(deserialized_content, Ok(content) if content.contents == vec![0xCA, 0xFE, 0xBA, 0xBE])
+    );
     }
 #[test]
     fn without_id() {
@@ -68,7 +73,9 @@ where
     ";
 
     let deserialized_content = serde_yaml::from_str::<Contents>(&yaml);
-    assert!(deserialized_content.is_ok());
+    assert!(
+        matches!(deserialized_content, Ok(content) if content.contents == vec![0xCA, 0xFE, 0xBA, 0xBE])
+    );
     }
 #[test]
     fn string_case() {
@@ -78,7 +85,9 @@ where
     ";
 
     let deserialized_content = serde_yaml::from_str::<Contents>(&yaml);
-    assert!(deserialized_content.is_ok());
+    assert!(
+        matches!(deserialized_content, Ok(content) if content.contents == vec![74, 70, 73, 70])
+    );
     }
 #[test]
     fn extra_field() {
@@ -91,3 +100,4 @@ where
     let deserialized_content = serde_yaml::from_str::<Contents>(&yaml);
     assert!(!deserialized_content.is_ok());
     }
+}

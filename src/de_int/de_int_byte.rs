@@ -54,10 +54,6 @@ impl<'de> Deserialize<'de> for IntegerByte {
         deserializer.deserialize_map(MyDataVisitor)
     }
 }
-fn deserialize_int_long(input:&str) -> IntegerByte {
-    return serde_yaml::from_str(input).expect("Failed to deserialize");
-}
-
 
  fn deserialize_int_byte(input:&str) ->IntegerByte{
      return serde_yaml::from_str(input).expect("Failed to deserialize");

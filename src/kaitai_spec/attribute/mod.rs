@@ -1,6 +1,7 @@
 use serde::{Deserialize, Deserializer};
 
 pub enum AttributeType {
+    Contents(Vec<u8>),
 }
 
 struct Attribute {

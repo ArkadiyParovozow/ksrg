@@ -1,3 +1,8 @@
+use serde::{Deserialize, Deserializer};
+use serde::de::{self, MapAccess, Visitor};
+use std::fmt;
+
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum StringOrByte<'a> {
@@ -8,24 +13,30 @@ pub enum StringOrByte<'a> {
 #[derive(Debug)]
 pub struct ContentsBytes(pub Vec<u8>);
 
-
 impl<'de> Deserialize<'de> for ContentsBytes {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
-        where
-            D: Deserializer<'de>,
+    where
+        D: Deserializer<'de>,
     {
         struct MyDataVisitor;
 
-        impl<'de> serde::de::Visitor<'de> for MyDataVisitor {
+        impl<'de> de::Visitor<'de> for MyDataVisitor {
             type Value = ContentsBytes;
 
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("a object with fields 'id', 'type', and 'doc'")
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("a sequence of bytes or strings")
+            }
+
+            fn visit_str<E>(self, value: &str) -> Result<Self::Value, E>
+            where
+                E: de::Error,
+            {
+                Ok(ContentsBytes(value.as_bytes().to_vec()))
             }
 
             fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
-                where
-                    A: serde::de::SeqAccess<'de>,
+            where
+                A: de::SeqAccess<'de>,
             {
                 let mut bytes = Vec::with_capacity(1_000);
                 while let Some(string_or_byte) = seq.next_element::<StringOrByte>()? {
@@ -36,11 +47,22 @@ impl<'de> Deserialize<'de> for ContentsBytes {
                         }
                     }
                 }
-
                 Ok(ContentsBytes(bytes))
             }
-        }
 
-        deserializer.deserialize_seq(MyDataVisitor)
+        }
+        deserializer.deserialize_any(MyDataVisitor)
     }
+}
+
+
+fn process<'de, A>(state: State, mut map: A) -> Result<Attribute, A::Error>
+where
+    A: MapAccess<'de>,
+{
+    let contents_bytes = map.next_value::<ContentsBytes>()?.0;
+    Ok(Attribute {
+        id: state.id,
+        type_: AttributeType::Contents(contents_bytes),
+    })
 }

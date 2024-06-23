@@ -56,13 +56,26 @@ impl<'de> Deserialize<'de> for ContentsBytes {
 }
 
 
-fn process<'de, A>(state: State, mut map: A) -> Result<Attribute, A::Error>
+fn process<'de, A>(mut common_keys: CommonKeys, mut map: A) -> Result<Attribute, A::Error>
 where
     A: MapAccess<'de>,
 {
-    let contents_bytes = map.next_value::<ContentsBytes>()?.0;
+    let ContentsBytes(contents_bytes) = map.next_value()?;
+
+    while let Some(key) = map.next_key::<&str>()? {
+        if common_keys.process(key, &mut map)? {
+            continue;
+        } else if key == "contents" {
+            return Err(de::Error::duplicate_field("contents"));
+        } else {
+            return Err(de::Error::unknown_field(key, &["id", "doc", "doc-ref", "contents"]));
+        }
+    }
+
     Ok(Attribute {
-        id: state.id,
+        id: common_keys.id.unwrap_or_default(),
+        doc: common_keys.doc,
+        doc_ref: common_keys.doc_ref,
         type_: AttributeType::Contents(contents_bytes),
     })
 }

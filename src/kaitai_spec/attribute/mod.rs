@@ -4,10 +4,13 @@ use serde::{
 };
 use std::fmt;
 mod enumeration;
+
+#[derive(Debug, PartialEq)]
 pub enum AttributeType {
     Enumeration(enumeration::Enumeration),
 }
 
+#[derive(Debug, PartialEq)]
 struct Attribute {
     id: String,
     doc: Option<String>,
@@ -37,6 +40,16 @@ impl<'de> Deserialize<'de> for Attribute {
                     if common_keys.process(key, &mut map)? {
                         continue;
                     }
+                    match key {
+                        "enum" => {
+                            return enumeration::process(
+                                map.next_value::<String>()?,
+                                common_keys,
+                                map,
+                            )
+                        }
+                        _ => {}
+                    }
                 }
 
                 todo!()
@@ -52,6 +65,7 @@ struct CommonKeys {
     id: Option<String>,
     doc: Option<String>,
     doc_ref: Option<String>,
+    type_uncheck: Option<String>,
 }
 
 impl CommonKeys {
@@ -82,6 +96,15 @@ impl CommonKeys {
                 Some(_) => Err(A::Error::duplicate_field("doc-ref")),
                 None => {
                     self.doc_ref = Some(map.next_value::<String>()?);
+
+                    Ok(true)
+                }
+            },
+
+            "type" => match self.type_uncheck {
+                Some(_) => Err(A::Error::duplicate_field("type")),
+                None => {
+                    self.type_uncheck = Some(map.next_value::<String>()?);
 
                     Ok(true)
                 }

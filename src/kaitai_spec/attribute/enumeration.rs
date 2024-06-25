@@ -1,6 +1,5 @@
-use crate::kaitai_spec::attribute::AttributeType;
+use crate::kaitai_spec::attribute::{Attribute, AttributeType, CommonKeys};
 use serde::de::Error;
-use std::collections::HashMap;
 
 const ENDIAN: Endian = Endian::Big;
 #[derive(Debug, PartialEq)]
@@ -28,29 +27,28 @@ enum Endian {
     Little,
     Big,
 }
-pub fn process<'de, A>(key_values: HashMap<String, String>) -> Result<AttributeType, A::Error>
+pub fn process<'de, A>(
+    name: String,
+    mut common_keys: CommonKeys,
+    mut map: A,
+) -> Result<Attribute, A::Error>
 where
     A: serde::de::MapAccess<'de>,
 {
     let mut endian: Endian = ENDIAN; //DEFAULT
-    let mut type_unchecked: Option<String> = None;
-    let mut name: Option<String> = None;
     let type_: Option<EnumType>;
 
-    let mut iter = key_values.clone().into_keys();
-    while let Some(key) = iter.next() {
-        match key.as_str() {
-            "enum" => {
-                name = Some(key_values.get(&key).expect("Failed to read").to_string());
-            }
-            "type" => {
-                type_unchecked = Some(key_values.get(&key).expect("Failed to read").to_string());
-            }
-            _ => return Err(A::Error::unknown_field(key.as_str(), &["type"])),
+    while let Some(key) = map.next_key::<&str>()? {
+        if common_keys.process(key, &mut map)? {
+            continue;
+        }
+        match key {
+            _ => return Err(A::Error::unknown_field(key, &["nothing expected"])),
         }
     }
-    let name: String = name.ok_or_else(|| A::Error::missing_field("enum"))?;
-    let type_unchecked: String = type_unchecked.ok_or_else(|| A::Error::missing_field("type"))?;
+    let type_unchecked: String = common_keys
+        .type_uncheck
+        .ok_or_else(|| A::Error::missing_field("type"))?;
 
     match type_unchecked.chars().count() {
         4 => {
@@ -96,7 +94,14 @@ where
         _ => return Err(A::Error::custom("invalid type")),
     };
     let type_ = type_.ok_or_else(|| A::Error::custom("invalid type"))?;
-    return Ok(AttributeType::Enumeration(Enumeration { name, type_ }));
+    let id: String = common_keys
+        .id
+        .ok_or_else(|| A::Error::missing_field("id"))?;
+    return Ok(Attribute {
+        id,
+        doc: common_keys.doc,
+        type_: AttributeType::Enumeration(Enumeration { name, type_ }),
+    });
 }
 
 #[cfg(test)]

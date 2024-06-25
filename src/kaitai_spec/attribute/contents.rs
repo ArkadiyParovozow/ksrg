@@ -18,9 +18,9 @@ impl<'de> Deserialize<'de> for ContentsBytes {
     where
         D: Deserializer<'de>,
     {
-        struct MyDataVisitor;
+        struct Visitor;
 
-        impl<'de> de::Visitor<'de> for MyDataVisitor {
+        impl<'de> de::Visitor<'de> for Visitor {
             type Value = ContentsBytes;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
@@ -47,11 +47,11 @@ impl<'de> Deserialize<'de> for ContentsBytes {
                         }
                     }
                 }
+
                 Ok(ContentsBytes(bytes))
             }
-
         }
-        deserializer.deserialize_any(MyDataVisitor)
+        deserializer.deserialize_any(Visitor)
     }
 }
 

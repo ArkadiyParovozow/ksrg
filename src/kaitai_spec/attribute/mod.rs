@@ -1,12 +1,13 @@
-use serde::{de::Error, Deserialize, Deserializer};
-use std::collections::hash_map::IntoKeys;
-use std::collections::HashMap;
+use serde::{
+    de::{self, Error},
+    Deserialize, Deserializer,
+};
+use std::fmt;
 mod enumeration;
-#[derive(Debug, PartialEq)]
 pub enum AttributeType {
     Enumeration(enumeration::Enumeration),
 }
-#[derive(Debug, PartialEq)]
+
 struct Attribute {
     id: String,
     doc: Option<String>,
@@ -20,63 +21,73 @@ impl<'de> Deserialize<'de> for Attribute {
     {
         struct Visitor;
 
-        impl<'de> serde::de::Visitor<'de> for Visitor {
+        impl<'de> de::Visitor<'de> for Visitor {
             type Value = Attribute;
 
-            fn expecting(&self, formatter: &mut std::fmt::Formatter) -> std::fmt::Result {
-                formatter.write_str("a object with correct fields") //todo()
+            fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
+                formatter.write_str("an object with correct fields")
             }
 
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
             where
-                A: serde::de::MapAccess<'de>,
+                A: de::MapAccess<'de>,
             {
-                {
-                    let mut id = None;
-                    let mut doc = None;
-                    let mut type_ = None;
-
-                    let mut key_values: HashMap<String, String> = HashMap::new();
-                    while let Some(key) = map.next_key::<String>()? {
-                        match key.as_str() {
-                            "id" => {
-                                if id.is_some() {
-                                    return Err(A::Error::duplicate_field("id"));
-                                }
-                                id = Some(map.next_value::<String>()?);
-                            }
-                            "doc" => {
-                                if doc.is_some() {
-                                    return Err(A::Error::duplicate_field("id"));
-                                }
-                                doc = Some(map.next_value::<String>()?);
-                            }
-                            _ => {
-                                let key_ref = key.clone();
-                                if key_values.contains_key(key_ref.as_str()) {
-                                    return Err(A::Error::duplicate_field(""));
-                                }
-                                key_values.insert(key, map.next_value::<String>()?);
-                            }
-                        }
+                let mut common_keys = CommonKeys::default();
+                while let Some(key) = map.next_key::<&str>()? {
+                    if common_keys.process(key, &mut map)? {
+                        continue;
                     }
-                    let mut key_iter: IntoKeys<String, String> = key_values.clone().into_keys();
-                    while let Some(key) = key_iter.next() {
-                        match key.as_str() {
-                            "enum" => type_ = Some(enumeration::process::<A>(key_values.clone())?),
-                            _ => {
-                                //todo!()
-                            }
-                        }
-                    }
-                    let id: String = id.ok_or_else(|| A::Error::missing_field("id"))?;
-                    let type_: AttributeType =
-                        type_.ok_or_else(|| A::Error::unknown_variant(id.as_str(), &[""]))?;
-                    Ok(Attribute { id, doc, type_ })
                 }
+
+                todo!()
             }
         }
 
         deserializer.deserialize_map(Visitor)
+    }
+}
+
+#[derive(Debug, Default, Clone)]
+struct CommonKeys {
+    id: Option<String>,
+    doc: Option<String>,
+    doc_ref: Option<String>,
+}
+
+impl CommonKeys {
+    fn process<'de, A>(&mut self, key: &str, map: &mut A) -> Result<bool, A::Error>
+    where
+        A: de::MapAccess<'de>,
+    {
+        match key {
+            "id" => match self.id {
+                Some(_) => Err(A::Error::duplicate_field("id")),
+                None => {
+                    self.id = Some(map.next_value::<String>()?);
+
+                    Ok(true)
+                }
+            },
+
+            "doc" => match self.doc {
+                Some(_) => Err(A::Error::duplicate_field("doc")),
+                None => {
+                    self.doc = Some(map.next_value::<String>()?);
+
+                    Ok(true)
+                }
+            },
+
+            "doc-ref" => match self.doc_ref {
+                Some(_) => Err(A::Error::duplicate_field("doc-ref")),
+                None => {
+                    self.doc_ref = Some(map.next_value::<String>()?);
+
+                    Ok(true)
+                }
+            },
+
+            _ => Ok(false),
+        }
     }
 }

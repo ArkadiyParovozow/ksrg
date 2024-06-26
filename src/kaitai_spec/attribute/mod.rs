@@ -1,3 +1,5 @@
+#[cfg(test)]
+mod tests;
 use serde::{
     de::{self, Error, MapAccess},
     Deserialize, Deserializer,
@@ -99,6 +101,3 @@ impl CommonKeys {
         }
     }
 }
-
-#[cfg(test)]
-mod tests;

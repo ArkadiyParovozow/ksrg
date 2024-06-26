@@ -99,3 +99,6 @@ impl CommonKeys {
         }
     }
 }
+
+#[cfg(test)]
+mod tests;

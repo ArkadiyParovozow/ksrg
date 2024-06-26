@@ -1,6 +1,5 @@
-#[cfg(test)]
-mod tests {
-    use super::*;
+ use super::*;
+ 
 #[test]
     fn simple_de() {
         let yaml = "
@@ -201,4 +200,3 @@ mod tests {
 
         assert!(result.is_err());
     }
-}

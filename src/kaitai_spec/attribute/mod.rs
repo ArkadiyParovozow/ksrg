@@ -1,14 +1,19 @@
+#[cfg(test)]
+mod tests;
 use serde::{
-    de::{self, Error},
+    de::{self, Error, MapAccess},
     Deserialize, Deserializer,
 };
 use std::fmt;
 
-pub enum AttributeType {}
+pub enum AttributeType {
+    Contents(Vec<u8>),
+}
 
 struct Attribute {
     id: String,
     doc: Option<String>,
+    doc_ref: Option<String>,
     type_: AttributeType,
 }
 
@@ -17,31 +22,38 @@ impl<'de> Deserialize<'de> for Attribute {
     where
         D: Deserializer<'de>,
     {
-        struct Visitor;
+        struct AttributeVisitor;
 
-        impl<'de> de::Visitor<'de> for Visitor {
+        impl<'de> de::Visitor<'de> for AttributeVisitor {
             type Value = Attribute;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
-                formatter.write_str("an object with correct fields")
+                formatter.write_str("a struct with fields 'id', 'doc', 'doc-ref', and 'contents'")
             }
 
             fn visit_map<A>(self, mut map: A) -> Result<Self::Value, A::Error>
             where
-                A: de::MapAccess<'de>,
+                A: MapAccess<'de>,
             {
                 let mut common_keys = CommonKeys::default();
                 while let Some(key) = map.next_key::<&str>()? {
                     if common_keys.process(key, &mut map)? {
                         continue;
                     }
+                    match key {
+                        "contents" => {
+                            return contents::process(common_keys, map);
+                        }
+                        _ => {
+                            return Err(de::Error::unknown_field(key, &["id", "doc", "doc-ref", "contents"]));
+                        }
+                    }
                 }
-
-                todo!()
+                Err(de::Error::missing_field("contents"))
             }
         }
 
-        deserializer.deserialize_map(Visitor)
+        deserializer.deserialize_map(AttributeVisitor)
     }
 }
 

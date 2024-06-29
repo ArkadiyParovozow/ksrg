@@ -46,11 +46,9 @@ impl<'de> Deserialize<'de> for Attribute {
                         continue;
                     }
                     match key {
-                        "enum" => {
-                            return enumeration::process(common_keys, map)
-                        }
+                        "enum" => return enumeration::process(common_keys, map),
                         "contents" => {
-                            //return contents::process(common_keys, map);
+                            return contents::process(common_keys, map);
                         }
                         _ => {
                             return Err(de::Error::unknown_field(
@@ -73,7 +71,7 @@ struct CommonKeys {
     id: Option<String>,
     doc: Option<String>,
     doc_ref: Option<String>,
-    type_uncheck: Option<String>,
+    type_: Option<String>,
 }
 
 impl CommonKeys {
@@ -109,10 +107,10 @@ impl CommonKeys {
                 }
             },
 
-            "type" => match self.type_uncheck {
+            "type" => match self.type_ {
                 Some(_) => Err(A::Error::duplicate_field("type")),
                 None => {
-                    self.type_uncheck = Some(map.next_value::<String>()?);
+                    self.type_ = Some(map.next_value::<String>()?);
 
                     Ok(true)
                 }

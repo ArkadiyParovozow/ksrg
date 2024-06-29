@@ -46,7 +46,7 @@ where
         return Err(serde::de::Error::unknown_field(key, &["nothing expected"]));
     }
     let type_unchecked: String = common_keys
-        .type_uncheck
+        .type_
         .ok_or_else(|| serde::de::Error::missing_field("type"))?;
 
     let endian: Option<Endian> = match type_unchecked.len() {

@@ -100,6 +100,7 @@ where
     return Ok(Attribute {
         id,
         doc: common_keys.doc,
+        doc_ref: common_keys.doc_ref,
         type_: AttributeType::Enumeration(Enumeration { name, type_ }),
     });
 }

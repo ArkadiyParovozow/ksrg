@@ -1,7 +1,6 @@
-use serde::{Deserialize, Deserializer};
 use serde::de::{self, MapAccess, Visitor};
+use serde::{Deserialize, Deserializer};
 use std::fmt;
-
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -55,8 +54,7 @@ impl<'de> Deserialize<'de> for ContentsBytes {
     }
 }
 
-
-fn process<'de, A>(mut common_keys: CommonKeys, mut map: A) -> Result<Attribute, A::Error>
+pub fn process<'de, A>(mut common_keys: CommonKeys, mut map: A) -> Result<Attribute, A::Error>
 where
     A: MapAccess<'de>,
 {
@@ -68,7 +66,10 @@ where
         } else if key == "contents" {
             return Err(de::Error::duplicate_field("contents"));
         } else {
-            return Err(de::Error::unknown_field(key, &["id", "doc", "doc-ref", "contents"]));
+            return Err(de::Error::unknown_field(
+                key,
+                &["id", "doc", "doc-ref", "contents"],
+            ));
         }
     }
 

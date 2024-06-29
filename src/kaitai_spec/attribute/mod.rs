@@ -47,14 +47,10 @@ impl<'de> Deserialize<'de> for Attribute {
                     }
                     match key {
                         "enum" => {
-                            return enumeration::process(
-                                map.next_value::<String>()?,
-                                common_keys,
-                                map,
-                            )
+                            return enumeration::process(common_keys, map)
                         }
                         "contents" => {
-                            return contents::process(common_keys, map);
+                            //return contents::process(common_keys, map);
                         }
                         _ => {
                             return Err(de::Error::unknown_field(

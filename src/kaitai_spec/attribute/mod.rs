@@ -5,7 +5,7 @@ use serde::{
     Deserialize, Deserializer,
 };
 use std::fmt;
-
+mod contents;
 mod enumeration;
 
 #[derive(Debug, PartialEq)]

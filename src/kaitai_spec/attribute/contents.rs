@@ -1,4 +1,4 @@
-use serde::de::{self, MapAccess, Visitor};
+use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
@@ -54,7 +54,7 @@ impl<'de> Deserialize<'de> for ContentsBytes {
     }
 }
 
-pub fn process<'de, A>(mut common_keys: CommonKeys, mut map: A) -> Result<Attribute, A::Error>
+pub fn process<'de, A>(mut common_keys: super::CommonKeys, mut map: A) -> Result<super::Attribute, A::Error>
 where
     A: MapAccess<'de>,
 {
@@ -73,10 +73,10 @@ where
         }
     }
 
-    Ok(Attribute {
+    Ok(super::Attribute {
         id: common_keys.id.unwrap_or_default(),
         doc: common_keys.doc,
         doc_ref: common_keys.doc_ref,
-        type_: AttributeType::Contents(contents_bytes),
+        type_: super::AttributeType::Contents(contents_bytes),
     })
 }

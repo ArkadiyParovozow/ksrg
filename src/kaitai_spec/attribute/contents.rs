@@ -2,6 +2,9 @@ use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
+use super::CommonKeys;
+use super::Attribute;
+
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
 pub enum StringOrByte<'a> {
@@ -54,7 +57,7 @@ impl<'de> Deserialize<'de> for ContentsBytes {
     }
 }
 
-pub fn process<'de, A>(mut common_keys: super::CommonKeys, mut map: A) -> Result<super::Attribute, A::Error>
+pub fn process<'de, A>(mut common_keys: CommonKeys, mut map: A) -> Result<Attribute, A::Error>
 where
     A: MapAccess<'de>,
 {

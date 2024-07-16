@@ -1,6 +1,5 @@
-mod de_int;
+mod kaitai_spec;
 
-pub const ENDIAN: &str = "be";
 fn main() {
-    return;
+    println!("Hello, world!");
 }

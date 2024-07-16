@@ -266,3 +266,58 @@ fn incorrect_type_enum2() {
         doc: My doc"#;
     let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
 }
+
+#[test]
+fn simple_int1() {
+    let str: &str = r#"
+        id: id_1
+        type: u2le
+        doc: My doc"#;
+    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let expect = Attribute {
+        id: String::from("id_1"),
+        doc_ref: None,
+        doc: Some(String::from("My doc")),
+        type_: AttributeType::Integer(integers::IntType::Long {
+            type_: integers::LongType::U2,
+            endian: Some(integers::Endian::Little),
+        }),
+    };
+    assert_eq!(_deserialized, expect);
+}
+
+#[test]
+fn simple_int2() {
+    let str: &str = r#"
+        id: data1
+        type: s1
+        doc: My doc"#;
+    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let expect = Attribute {
+        id: String::from("data1"),
+        doc_ref: None,
+        doc: Some(String::from("My doc")),
+        type_: AttributeType::Integer(integers::IntType::S1),
+    };
+    assert_eq!(_deserialized, expect);
+}
+
+#[test]
+#[should_panic]
+fn incorrect_type_int1() {
+    let str: &str = r#"
+        id: birth_year
+        type: incorrect
+        doc: My doc"#;
+    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+}
+
+#[test]
+#[should_panic]
+fn incorrect_type_int2() {
+    let str: &str = r#"
+        id: birth_year
+        type: u2lee
+        doc: My doc"#;
+    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+}

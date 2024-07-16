@@ -7,11 +7,13 @@ use serde::{
 use std::fmt;
 
 mod enumeration;
+mod integers;
 
 #[derive(Debug, PartialEq)]
 pub enum AttributeType {
     Contents(Vec<u8>),
     Enumeration(enumeration::Enumeration),
+    Integer(integers::IntType),
 }
 
 #[derive(Debug, PartialEq)]
@@ -53,12 +55,12 @@ impl<'de> Deserialize<'de> for Attribute {
                         _ => {
                             return Err(de::Error::unknown_field(
                                 key,
-                                &["id", "doc", "doc-ref", "contents"],
+                                &["id", "doc", "doc-ref", "contents", "enum"],
                             ));
                         }
                     }
                 }
-                Err(de::Error::missing_field("contents"))
+                return integers::process(common_keys, map);
             }
         }
 

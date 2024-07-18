@@ -75,7 +75,7 @@ where
         }
     }
 
-    Ok(super::Attribute {
+    Ok(Attribute {
         id: common_keys.id.unwrap_or_default(),
         doc: common_keys.doc,
         doc_ref: common_keys.doc_ref,

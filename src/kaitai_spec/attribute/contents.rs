@@ -79,6 +79,6 @@ where
         id: common_keys.id.unwrap_or_default(),
         doc: common_keys.doc,
         doc_ref: common_keys.doc_ref,
-        type_: super::AttributeType::Contents(contents_bytes),
+        type_: AttributeType::Contents(contents_bytes),
     })
 }

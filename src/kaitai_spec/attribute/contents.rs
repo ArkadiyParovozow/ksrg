@@ -2,8 +2,7 @@ use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
-use super::CommonKeys;
-use super::Attribute;
+use super::{Attribute, AttributeType, CommonKeys};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]

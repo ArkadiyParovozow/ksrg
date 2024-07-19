@@ -6,6 +6,7 @@ use serde::{
 };
 use std::fmt;
 
+mod contents;
 mod enumeration;
 
 #[derive(Debug, PartialEq)]

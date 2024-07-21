@@ -6,6 +6,7 @@ use serde::{
 };
 use std::fmt;
 
+mod common_types;
 mod contents;
 mod enumeration;
 mod integers;
@@ -14,7 +15,7 @@ mod integers;
 pub enum AttributeType {
     Contents(Vec<u8>),
     Enumeration(enumeration::Enumeration),
-    Integer(integers::IntType),
+    Integer(common_types::IntType),
 }
 
 #[derive(Debug, PartialEq)]

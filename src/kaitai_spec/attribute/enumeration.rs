@@ -1,33 +1,9 @@
+use super::common_types::IntType;
+
 #[derive(Debug, PartialEq)]
 pub struct Enumeration {
     pub name: String,
-    pub type_: EnumType,
-}
-
-#[derive(Debug, PartialEq)]
-pub enum EnumType {
-    U1,
-    S1,
-    Long {
-        type_: LongType,
-        endian: Option<Endian>,
-    },
-}
-
-#[derive(Debug, PartialEq)]
-pub enum LongType {
-    U2,
-    U4,
-    U8,
-    S2,
-    S4,
-    S8,
-}
-
-#[derive(Debug, PartialEq, Clone)]
-pub enum Endian {
-    Little,
-    Big,
+    pub type_: IntType,
 }
 
 pub fn process<'de, A>(
@@ -49,48 +25,7 @@ where
         .type_
         .ok_or_else(|| serde::de::Error::missing_field("type"))?;
 
-    let endian: Option<Endian> = match type_unchecked.len() {
-        4 => match &type_unchecked[2..4] {
-            "le" => Some(Endian::Little),
-            "be" => Some(Endian::Big),
-            _ => return Err(serde::de::Error::custom("invalid type")),
-        },
-        2 => None,
-        _ => return Err(serde::de::Error::custom("invalid type")),
-    };
-
-    let type_ = super::AttributeType::Enumeration(Enumeration {
-        name,
-        type_: match &type_unchecked[0..2] {
-            "u1" => EnumType::U1,
-            "u2" => EnumType::Long {
-                type_: LongType::U2,
-                endian,
-            },
-            "u4" => EnumType::Long {
-                type_: LongType::U4,
-                endian,
-            },
-            "u8" => EnumType::Long {
-                type_: LongType::U8,
-                endian,
-            },
-            "s1" => EnumType::S1,
-            "s2" => EnumType::Long {
-                type_: LongType::S2,
-                endian,
-            },
-            "s4" => EnumType::Long {
-                type_: LongType::S4,
-                endian,
-            },
-            "s8" => EnumType::Long {
-                type_: LongType::S8,
-                endian,
-            },
-            _ => return Err(serde::de::Error::custom("invalid type")),
-        },
-    });
+    let type_: IntType = super::common_types::type_parse::<A>(type_unchecked)?;
 
     Ok(super::Attribute {
         id: common_keys
@@ -98,6 +33,6 @@ where
             .ok_or_else(|| serde::de::Error::missing_field("id"))?,
         doc: common_keys.doc,
         doc_ref: common_keys.doc_ref,
-        type_,
+        type_: super::AttributeType::Enumeration(Enumeration { name, type_ }),
     })
 }

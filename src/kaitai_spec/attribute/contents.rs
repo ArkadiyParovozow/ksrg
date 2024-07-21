@@ -1,6 +1,8 @@
-use serde::de::{self, MapAccess, Visitor};
+use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
+
+use super::{Attribute, AttributeType, CommonKeys};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]

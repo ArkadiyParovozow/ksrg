@@ -98,6 +98,7 @@ where
             .ok_or_else(|| serde::de::Error::missing_field("id"))?,
         doc: common_keys.doc,
         doc_ref: common_keys.doc_ref,
+        size: common_keys.size,
         type_,
     })
 }

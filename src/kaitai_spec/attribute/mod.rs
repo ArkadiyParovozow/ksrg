@@ -15,12 +15,20 @@ pub enum AttributeType {
     Enumeration(enumeration::Enumeration),
 }
 
+#[derive(Debug, PartialEq, Clone)]
+pub enum SizeType {
+    String(String),
+    Number(i16),
+}
+
 #[derive(Debug, PartialEq)]
 struct Attribute {
     id: String,
     doc: Option<String>,
     doc_ref: Option<String>,
     type_: AttributeType,
+    size: Option<SizeType>,
+
 }
 
 impl<'de> Deserialize<'de> for Attribute {
@@ -44,6 +52,7 @@ impl<'de> Deserialize<'de> for Attribute {
                 let mut common_keys = CommonKeys::default();
                 while let Some(key) = map.next_key::<&str>()? {
                     if common_keys.process(key, &mut map)? {
+
                         continue;
                     }
                     match key {
@@ -54,7 +63,7 @@ impl<'de> Deserialize<'de> for Attribute {
                         _ => {
                             return Err(de::Error::unknown_field(
                                 key,
-                                &["id", "doc", "doc-ref", "contents"],
+                                &["id", "doc", "doc-ref", "contents", "size"],
                             ));
                         }
                     }
@@ -73,6 +82,7 @@ struct CommonKeys {
     doc: Option<String>,
     doc_ref: Option<String>,
     type_: Option<String>,
+    size: Option<SizeType>,
 }
 
 impl CommonKeys {
@@ -113,6 +123,19 @@ impl CommonKeys {
                 None => {
                     self.type_ = Some(map.next_value::<String>()?);
 
+                    Ok(true)
+                }
+            },
+
+            "size" => match self.size {
+                Some(_) => Err(A::Error::duplicate_field("size")),
+                None => {
+                    let value = map.next_value::<String>()?;
+                    if let Ok(number) = value.parse::<i16>() {
+                        self.size = Some(SizeType::Number(number));
+                    } else {
+                        self.size = Some(SizeType::String(value));
+                    }
                     Ok(true)
                 }
             },

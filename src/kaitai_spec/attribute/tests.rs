@@ -17,11 +17,13 @@ fn simple_de() {
         doc,
         doc_ref,
         type_,
+        size,
     } = attribute;
 
     assert_eq!(id, "magic1");
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
+    assert_eq!(size, None);
     let contents = match type_ {
         AttributeType::Contents(contents) => contents,
         _ => unreachable!(),
@@ -43,11 +45,13 @@ fn without_id() {
         doc,
         doc_ref,
         type_,
+        size,
     } = attribute;
 
     assert_eq!(id, "");
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
+    assert_eq!(size, None);
     let contents = match type_ {
         AttributeType::Contents(contents) => contents,
         _ => unreachable!(),
@@ -72,11 +76,13 @@ fn string_case() {
         doc,
         doc_ref,
         type_,
+        size,
     } = attribute;
 
     assert_eq!(id, "magic1");
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
+    assert_eq!(size, None);
     let contents = match type_ {
         AttributeType::Contents(contents) => contents,
         _ => unreachable!(),
@@ -116,11 +122,13 @@ fn string_and_number_case() {
         doc,
         doc_ref,
         type_,
+        size,
     } = attribute;
 
     assert_eq!(id, "magic1");
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
+    assert_eq!(size, None);
     let contents = match type_ {
         AttributeType::Contents(contents) => contents,
         _ => unreachable!(),
@@ -145,11 +153,13 @@ fn byte_and_number_case() {
         doc,
         doc_ref,
         type_,
+        size,
     } = attribute;
 
     assert_eq!(id, "magic1");
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
+    assert_eq!(size, None);
     let contents = match type_ {
         AttributeType::Contents(contents) => contents,
         _ => unreachable!(),
@@ -174,11 +184,13 @@ fn extreme_example() {
         doc,
         doc_ref,
         type_,
+        size,
     } = attribute;
 
     assert_eq!(id, "magic1");
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
+    assert_eq!(size, None);
     let contents = match type_ {
         AttributeType::Contents(contents) => contents,
         _ => unreachable!(),
@@ -221,6 +233,7 @@ fn simple_enum1() {
                 endian: Some(enumeration::Endian::Little),
             },
         }),
+        size: None,
     };
     assert_eq!(_deserialized, expect);
 }
@@ -241,6 +254,7 @@ fn simple_enum2() {
             name: String::from("ip_prot"),
             type_: enumeration::EnumType::S1,
         }),
+        size: None,
     };
     assert_eq!(_deserialized, expect);
 }
@@ -265,4 +279,80 @@ fn incorrect_type_enum2() {
         type: u2lee
         doc: My doc"#;
     let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+}
+
+#[test]
+fn size_number() {
+    let yaml = "
+            id: magic1
+            doc: example
+            doc-ref: ref1
+            size: 24
+            contents: [0xca, 0xfe, 0xba, 0xbe]
+        ";
+
+    let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
+
+    let Attribute {
+        id,
+        doc,
+        doc_ref,
+        type_,
+        size,
+    } = attribute;
+
+    assert_eq!(id, "magic1");
+    assert_eq!(doc, Some("example".to_string()));
+    assert_eq!(doc_ref, Some("ref1".to_string()));
+    let size_value = match size {
+        Some(SizeType::Number(value)) => value,
+        _ => unreachable!(),
+    };
+    
+    assert_eq!(size_value, 24);
+
+    let contents = match type_ {
+        AttributeType::Contents(contents) => contents,
+        _ => unreachable!(),
+    };
+
+    assert_eq!(contents, vec![0xCA, 0xFE, 0xBA, 0xBE]);
+}
+
+#[test]
+fn size_string() {
+    let yaml = "
+            id: magic1
+            doc: example
+            doc-ref: ref1
+            size: my_len
+            contents: [0xca, 0xfe, 0xba, 0xbe]
+        ";
+
+    let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
+
+    let Attribute {
+        id,
+        doc,
+        doc_ref,
+        type_,
+        size,
+    } = attribute;
+
+    assert_eq!(id, "magic1");
+    assert_eq!(doc, Some("example".to_string()));
+    assert_eq!(doc_ref, Some("ref1".to_string()));
+    let size_value = match size {
+        Some(SizeType::String(value)) => value,
+        _ => unreachable!(),
+    };
+    
+    assert_eq!(size_value, "my_len");
+
+    let contents = match type_ {
+        AttributeType::Contents(contents) => contents,
+        _ => unreachable!(),
+    };
+
+    assert_eq!(contents, vec![0xCA, 0xFE, 0xBA, 0xBE]);
 }

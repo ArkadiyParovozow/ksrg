@@ -1,5 +1,4 @@
 use super::*;
-use crate::kaitai_spec;
 
 #[test]
 fn simple_de() {

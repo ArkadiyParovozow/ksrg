@@ -1,8 +1,9 @@
+use either::Either;
 use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
-use super::{Attribute, AttributeType, CommonKeys};
+use super::{Attribute, Context, ContextNoContents};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -12,9 +13,9 @@ pub enum StringOrByte<'a> {
 }
 
 #[derive(Debug)]
-pub struct ContentsBytes(pub Vec<u8>);
+pub struct Bytes(pub Vec<u8>);
 
-impl<'de> Deserialize<'de> for ContentsBytes {
+impl<'de> Deserialize<'de> for Bytes {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
         D: Deserializer<'de>,
@@ -22,7 +23,7 @@ impl<'de> Deserialize<'de> for ContentsBytes {
         struct Visitor;
 
         impl<'de> de::Visitor<'de> for Visitor {
-            type Value = ContentsBytes;
+            type Value = Bytes;
 
             fn expecting(&self, formatter: &mut fmt::Formatter) -> fmt::Result {
                 formatter.write_str("a sequence of bytes or strings")
@@ -32,7 +33,7 @@ impl<'de> Deserialize<'de> for ContentsBytes {
             where
                 E: de::Error,
             {
-                Ok(ContentsBytes(value.as_bytes().to_vec()))
+                Ok(Bytes(value.as_bytes().to_vec()))
             }
 
             fn visit_seq<A>(self, mut seq: A) -> Result<Self::Value, A::Error>
@@ -49,36 +50,13 @@ impl<'de> Deserialize<'de> for ContentsBytes {
                     }
                 }
 
-                Ok(ContentsBytes(bytes))
+                Ok(Bytes(bytes))
             }
         }
         deserializer.deserialize_any(Visitor)
     }
 }
 
-pub fn process<'de, A>(mut common_keys: CommonKeys, mut map: A) -> Result<Attribute, A::Error>
-where
-    A: MapAccess<'de>,
-{
-    let ContentsBytes(contents_bytes) = map.next_value()?;
-
-    while let Some(key) = map.next_key::<&str>()? {
-        if common_keys.process(key, &mut map)? {
-            continue;
-        } else if key == "contents" {
-            return Err(de::Error::duplicate_field("contents"));
-        } else {
-            return Err(de::Error::unknown_field(
-                key,
-                &["id", "doc", "doc-ref", "contents"],
-            ));
-        }
-    }
-
-    Ok(Attribute {
-        id: common_keys.id.unwrap_or_default(),
-        doc: common_keys.doc,
-        doc_ref: common_keys.doc_ref,
-        type_: AttributeType::Contents(contents_bytes),
-    })
+pub fn try_build<'de, A: MapAccess<'de>>(context: Context) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
+    todo!()
 }

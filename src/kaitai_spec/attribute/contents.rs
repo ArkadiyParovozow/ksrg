@@ -3,7 +3,7 @@ use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
-use super::{Attribute, Context, ContextNoContents};
+use super::{Attribute, Context, ContextNoContents, Enumeration};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -57,6 +57,14 @@ impl<'de> Deserialize<'de> for Bytes {
     }
 }
 
-pub fn try_build<'de, A: MapAccess<'de>>(context: Context) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
-    todo!()
+pub fn try_build<'de, A: MapAccess<'de>>(
+    context: Context,
+) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
+    //ONLY TO COMPILE!! :TODO
+    return Either::Right(ContextNoContents {
+        string_keys: context.string_keys,
+        size: context.size,
+        type_: context.type_,
+        type_attributes: context.type_attributes.unwrap().right(),
+    });
 }

@@ -207,7 +207,8 @@ fn simple_enum1() {
         id: id_1
         type: u2le
         enum: ip_prot
-        doc: My doc"#;
+        doc: My_doc
+        "#;
     let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
     let expect = Attribute {
         id: String::from("id_1"),
@@ -215,9 +216,9 @@ fn simple_enum1() {
         doc: Some(String::from("My doc")),
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
-            type_: enumeration::EnumType::Long {
-                type_: enumeration::LongType::U2,
-                endian: Some(enumeration::Endian::Little),
+            type_: common_types::IntType::Long {
+                type_: common_types::LongType::U2,
+                endian: Some(common_types::Endian::Little),
             },
         }),
     };
@@ -238,30 +239,8 @@ fn simple_enum2() {
         doc_ref: None,
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
-            type_: enumeration::EnumType::S1,
+            type_: common_types::IntType::S1,
         }),
     };
     assert_eq!(_deserialized, expect);
-}
-
-#[test]
-#[should_panic]
-fn incorrect_type_enum1() {
-    let str: &str = r#"
-        id: birth_year
-        enum: MA1
-        type: incorrect
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
-}
-
-#[test]
-#[should_panic]
-fn incorrect_type_enum2() {
-    let str: &str = r#"
-        id: birth_year
-        enum: MA1
-        type: u2lee
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
 }

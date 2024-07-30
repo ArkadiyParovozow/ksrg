@@ -1,12 +1,13 @@
 #[cfg(test)]
 mod tests;
+use either::Either;
 use serde::{
     de::{self, Error, MapAccess},
     Deserialize, Deserializer,
 };
-use std::{fmt, collections::HashMap};
-use either::Either;
+use std::{collections::HashMap, fmt};
 
+mod common_types;
 mod contents;
 mod enumeration;
 
@@ -72,7 +73,7 @@ fn build_attribute<'de, A: MapAccess<'de>>(context: Context) -> Result<Attribute
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };
-
+    return enumeration::try_build::<A>(context);
     todo!()
 }
 
@@ -102,7 +103,9 @@ impl<'de> Deserialize<'de> for Attribute {
                         match $key_next {
                             None => return build_attribute::<A>(context),
                             Some(key) if key == $key => {
-                                context.string_keys.insert($key, map.next_value::<String>()?);
+                                context
+                                    .string_keys
+                                    .insert($key, map.next_value::<String>()?);
 
                                 map.next_key::<&str>()?
                             }
@@ -153,11 +156,13 @@ impl<'de> Deserialize<'de> for Attribute {
                     Some(key) => {
                         if key == "enum" {
                             let name = map.next_value::<String>()?;
-                            context.type_attributes = Some(Either::Right(Either::Left(Enumeration(name))));
+                            context.type_attributes =
+                                Some(Either::Right(Either::Left(Enumeration(name))));
 
                             map.next_key::<&str>()?
                         } else if key == "contents" {
-                            context.type_attributes = Some(Either::Left(map.next_value::<contents::Bytes>()?));
+                            context.type_attributes =
+                                Some(Either::Left(map.next_value::<contents::Bytes>()?));
 
                             map.next_key::<&str>()?
                         } else {

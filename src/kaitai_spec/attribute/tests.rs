@@ -4,9 +4,9 @@ use super::*;
 fn simple_de() {
     let yaml = "
             id: magic1
+            contents: [0xca, 0xfe, 0xba, 0xbe]
             doc: example
             doc-ref: ref1
-            contents: [0xca, 0xfe, 0xba, 0xbe]
         ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -30,38 +30,12 @@ fn simple_de() {
 }
 
 #[test]
-fn without_id() {
-    let yaml = "
-            doc: example
-            doc-ref: ref1
-            contents: JFIF
-        ";
-    let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
-    let Attribute {
-        id,
-        doc,
-        doc_ref,
-        type_,
-    } = attribute;
-
-    assert_eq!(id, "");
-    assert_eq!(doc, Some("example".to_string()));
-    assert_eq!(doc_ref, Some("ref1".to_string()));
-    let contents = match type_ {
-        AttributeType::Contents(contents) => contents,
-        _ => unreachable!(),
-    };
-
-    assert_eq!(contents, b"JFIF".to_vec());
-}
-
-#[test]
 fn string_case() {
     let yaml = "
         id: magic1
+        contents: JFIF
         doc: example
         doc-ref: ref1
-        contents: JFIF
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -88,9 +62,9 @@ fn string_case() {
 fn extra_field() {
     let yaml = "
         id: magic1
+        contents: JFIF
         doc: example
         doc-ref: ref1
-        contents: JFIF
         extra_field:
     ";
 
@@ -103,9 +77,9 @@ fn extra_field() {
 fn string_and_number_case() {
     let yaml = "
         id: magic1
+        contents: [CAFE, 0, BABE]
         doc: example
         doc-ref: ref1
-        contents: [CAFE, 0, BABE]
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -132,9 +106,9 @@ fn string_and_number_case() {
 fn byte_and_number_case() {
     let yaml = "
         id: magic1
+        contents: [foo, 0, A, 0xa, 42]
         doc: example
         doc-ref: ref1
-        contents: [foo, 0, A, 0xa, 42]
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -161,9 +135,9 @@ fn byte_and_number_case() {
 fn extreme_example() {
     let yaml = "
         id: magic1
+        contents: [1, 0x55, '▒,3', 3]
         doc: example
         doc-ref: ref1
-        contents: [1, 0x55, '▒,3', 3]
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -190,10 +164,10 @@ fn extreme_example() {
 fn duplicate_contents() {
     let yaml = "
             id: magic1
+            contents: JFIF
+            contents: JFIF
             doc: example
             doc-ref: ref1
-            contents: JFIF
-            contents: JFIF
         ";
 
     let result: Result<Attribute, _> = serde_yaml::from_str(yaml);

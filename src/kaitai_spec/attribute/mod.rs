@@ -68,12 +68,24 @@ struct ContextNoContents {
     type_attributes: Option<Either<Enumeration, TypeAttributes>>,
 }
 
+#[derive(Default)]
+struct ContextTypeAttributes {
+    // string keys such as 'id', '-orig-id', 'if', etc
+    string_keys: HashMap<&'static str, String>,
+    size: Option<Size>,
+    type_: Option<String>,
+    type_attributes: Option<TypeAttributes>,
+}
+
 fn build_attribute<'de, A: MapAccess<'de>>(context: Context) -> Result<Attribute, A::Error> {
     let context = match contents::try_build::<A>(context) {
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };
-    return enumeration::try_build::<A>(context);
+    let context = match enumeration::try_build::<A>(context){
+        Either::Left(result) => return result,
+        Either::Right(context) => context,
+    };
     todo!()
 }
 

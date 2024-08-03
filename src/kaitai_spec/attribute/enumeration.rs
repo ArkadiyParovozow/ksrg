@@ -16,12 +16,14 @@ where
 {
     match context.type_attributes.is_some() {
         true => return Either::Left(build_attribute::<A>(context)),
-        false => return Either::Right(ContextTypeAttributes {
-            string_keys: context.string_keys,
-            size: context.size,
-            type_: context.type_,
-            type_attributes: context.type_attributes.unwrap().right()
-        }),
+        false => {
+            return Either::Right(ContextTypeAttributes {
+                string_keys: context.string_keys,
+                size: context.size,
+                type_: context.type_,
+                type_attributes: context.type_attributes.unwrap().right(),
+            })
+        }
     }
 }
 
@@ -34,7 +36,7 @@ where
     let id: String = keys
         .remove("id")
         .ok_or_else(|| serde::de::Error::missing_field("type"))?;
-    let doc: Option<String> = keys.remove("id");
+    let doc: Option<String> = keys.remove("doc");
     let doc_ref: Option<String> = keys.remove("doc_ref");
     for key in keys.into_keys() {
         return Err(serde::de::Error::unknown_field(key, &["id", "doc", "type"]));

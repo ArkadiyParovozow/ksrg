@@ -213,7 +213,7 @@ fn simple_enum1() {
     let expect = Attribute {
         id: String::from("id_1"),
         doc_ref: None,
-        doc: Some(String::from("My doc")),
+        doc: Some(String::from("My_doc")),
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
             type_: common_types::IntType::Long {

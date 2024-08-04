@@ -244,3 +244,24 @@ fn simple_enum2() {
     };
     assert_eq!(_deserialized, expect);
 }
+
+#[test]
+fn incorrect_type_enum1() {
+    let str: &str = r#"
+        id: birth_year
+        enum: MA1
+        type: incorrect
+        doc: My doc"#;
+    let _deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
+}
+
+#[test]
+fn incorrect_type_enum2() {
+    let str: &str = r#"
+        id: birth_year
+        enum: MA1
+        type: u2lee
+        doc: My doc"#;
+    let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
+    assert!(deserialized.is_err())
+}

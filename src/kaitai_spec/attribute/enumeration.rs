@@ -5,7 +5,7 @@ use std::collections::HashMap;
 #[derive(Debug, PartialEq)]
 pub struct Enumeration {
     pub name: String,
-    pub type_: super::common_types::IntType,
+    pub type_: super::common::Integer,
 }
 
 pub fn try_build<'de, A>(
@@ -45,7 +45,7 @@ where
     let type_unchecked: String = context
         .type_
         .ok_or_else(|| serde::de::Error::missing_field("type"))?;
-    let type_: super::common_types::IntType = super::common_types::type_parse::<A>(type_unchecked)?;
+    let type_: super::common::Integer = super::common::type_parse::<A>(type_unchecked)?;
 
     Ok(Attribute {
         id,

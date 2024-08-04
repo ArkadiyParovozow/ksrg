@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-pub enum IntType {
+pub enum Integer {
     U1,
     S1,
     Long {
@@ -24,7 +24,7 @@ pub enum Endian {
     Big,
 }
 
-pub fn type_parse<'de, A>(type_unchecked: String) -> Result<IntType, A::Error>
+pub fn type_parse<'de, A>(type_unchecked: String) -> Result<Integer, A::Error>
 where
     A: serde::de::MapAccess<'de>,
 {
@@ -38,30 +38,30 @@ where
         _ => return Err(serde::de::Error::custom("invalid type")),
     };
 
-    let type_: IntType = match &type_unchecked[0..2] {
-        "u1" => IntType::U1,
-        "u2" => IntType::Long {
+    let type_: Integer = match &type_unchecked[0..2] {
+        "u1" => Integer::U1,
+        "u2" => Integer::Long {
             type_: LongType::U2,
             endian,
         },
-        "u4" => IntType::Long {
+        "u4" => Integer::Long {
             type_: LongType::U4,
             endian,
         },
-        "u8" => IntType::Long {
+        "u8" => Integer::Long {
             type_: LongType::U8,
             endian,
         },
-        "s1" => IntType::S1,
-        "s2" => IntType::Long {
+        "s1" => Integer::S1,
+        "s2" => Integer::Long {
             type_: LongType::S2,
             endian,
         },
-        "s4" => IntType::Long {
+        "s4" => Integer::Long {
             type_: LongType::S4,
             endian,
         },
-        "s8" => IntType::Long {
+        "s8" => Integer::Long {
             type_: LongType::S8,
             endian,
         },

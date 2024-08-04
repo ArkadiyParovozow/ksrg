@@ -7,7 +7,7 @@ use serde::{
 };
 use std::{collections::HashMap, fmt};
 
-mod common_types;
+mod common;
 mod contents;
 mod enumeration;
 

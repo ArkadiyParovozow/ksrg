@@ -216,9 +216,9 @@ fn simple_enum1() {
         doc: Some(String::from("My_doc")),
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
-            type_: common_types::IntType::Long {
-                type_: common_types::LongType::U2,
-                endian: Some(common_types::Endian::Little),
+            type_: common::Integer::Long {
+                type_: common::LongType::U2,
+                endian: Some(common::Endian::Little),
             },
         }),
     };
@@ -239,7 +239,7 @@ fn simple_enum2() {
         doc_ref: None,
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
-            type_: common_types::IntType::S1,
+            type_: common::Integer::S1,
         }),
     };
     assert_eq!(_deserialized, expect);

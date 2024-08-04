@@ -1,3 +1,5 @@
+use serde::de::Error;
+
 #[derive(Debug, PartialEq)]
 pub enum Integer {
     U1,
@@ -24,7 +26,7 @@ pub enum Endian {
     Big,
 }
 
-pub fn type_parse<'de, A>(type_unchecked: String) -> Result<Integer, A::Error>
+pub fn type_parse<'de, A>(type_unchecked: &str) -> Result<Integer, A::Error>
 where
     A: serde::de::MapAccess<'de>,
 {
@@ -32,10 +34,10 @@ where
         4 => match &type_unchecked[2..4] {
             "le" => Some(Endian::Little),
             "be" => Some(Endian::Big),
-            _ => return Err(serde::de::Error::custom("invalid type")),
+            _ => return Err(Error::custom("invalid type")),
         },
         2 => None,
-        _ => return Err(serde::de::Error::custom("invalid type")),
+        _ => return Err(Error::custom("invalid type")),
     };
 
     let type_: Integer = match &type_unchecked[0..2] {
@@ -65,7 +67,7 @@ where
             type_: LongType::S8,
             endian,
         },
-        _ => return Err(serde::de::Error::custom("invalid type")),
+        _ => return Err(Error::custom("invalid type")),
     };
 
     return Ok(type_);

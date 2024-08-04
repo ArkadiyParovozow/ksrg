@@ -82,7 +82,7 @@ fn build_attribute<'de, A: MapAccess<'de>>(context: Context) -> Result<Attribute
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };
-    let context = match enumeration::try_build::<A>(context){
+    let context = match enumeration::try_build::<A>(context) {
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };

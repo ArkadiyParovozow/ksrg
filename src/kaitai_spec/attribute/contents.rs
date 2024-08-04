@@ -3,7 +3,7 @@ use serde::de::{self, MapAccess};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
-use super::{Attribute, Context, ContextNoContents, Enumeration};
+use super::{Attribute, Context, ContextNoContents};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]

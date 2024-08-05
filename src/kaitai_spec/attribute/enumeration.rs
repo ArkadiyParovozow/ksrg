@@ -1,19 +1,21 @@
-use super::{Attribute, ContextNoContents, ContextTypeAttributes};
+use super::{
+    common::{type_parse, Integer},
+    Attribute, AttributeType, ContextNoContents, ContextTypeAttributes,
+};
 use either::Either;
-use serde::de::Error;
-use std::collections::HashMap;
+use serde::de::{Error, MapAccess};
 
 #[derive(Debug, PartialEq)]
 pub struct Enumeration {
     pub name: String,
-    pub type_: super::common::Integer,
+    pub type_: Integer,
 }
 
 pub fn try_build<'de, A>(
     context: ContextNoContents,
 ) -> Either<Result<Attribute, A::Error>, ContextTypeAttributes>
 where
-    A: serde::de::MapAccess<'de>,
+    A: MapAccess<'de>,
 {
     let enumeration = match context.type_attributes {
         Some(Either::Left(enumeration)) => enumeration,
@@ -34,33 +36,30 @@ where
             })
         }
     };
-    return Either::Left(build_attribute::<A>(context.string_keys, enumeration.0, context.type_));
-}
-
-fn build_attribute<'de, A>(
-    mut keys: HashMap<&str, String>,
-    name: String,
-    type_unchecked: Option<String>
-) -> Result<Attribute, A::Error>
-where
-    A: serde::de::MapAccess<'de>,
-{
-    let id: String = keys
-        .remove("id")
-        .ok_or_else(|| Error::missing_field("type"))?;
+    let name: String = enumeration.0;
+    let mut keys = context.string_keys;
+    let id: String = match keys.remove("id") {
+        Some(id) => id,
+        None => return Either::Left(Err(Error::missing_field("id"))),
+    };
     let doc: Option<String> = keys.remove("doc");
     let doc_ref: Option<String> = keys.remove("doc_ref");
     for key in keys.into_keys() {
-        return Err(Error::unknown_field(key, &["id", "doc", "type"]));
+        return Either::Left(Err(Error::unknown_field(key, &["id", "doc", "type"])));
     }
 
-    let type_unchecked: String = type_unchecked.ok_or_else(|| Error::missing_field("type"))?;
-    let type_: super::common::Integer = super::common::type_parse::<A>(&type_unchecked)?;
-
-    Ok(Attribute {
+    let type_unchecked: String = match context.type_ {
+        Some(type_) => type_,
+        None => return Either::Left(Err(Error::missing_field("type"))),
+    };
+    let type_: Integer = match type_parse::<A>(&type_unchecked) {
+        Ok(type_) => type_,
+        Err(err) => return Either::Left(Err(err)),
+    };
+    return Either::Left(Ok(Attribute {
         id,
         doc,
         doc_ref,
-        type_: super::AttributeType::Enumeration(Enumeration { name, type_ }),
-    })
+        type_: AttributeType::Enumeration(Enumeration { name, type_ }),
+    }));
 }

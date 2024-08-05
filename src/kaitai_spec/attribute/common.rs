@@ -1,4 +1,4 @@
-use serde::de::Error;
+use serde::de::{Error, MapAccess};
 
 #[derive(Debug, PartialEq)]
 pub enum Integer {
@@ -28,7 +28,7 @@ pub enum Endian {
 
 pub fn type_parse<'de, A>(type_unchecked: &str) -> Result<Integer, A::Error>
 where
-    A: serde::de::MapAccess<'de>,
+    A: MapAccess<'de>,
 {
     let endian: Option<Endian> = match type_unchecked.len() {
         4 => match &type_unchecked[2..4] {

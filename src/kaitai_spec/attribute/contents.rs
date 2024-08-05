@@ -81,10 +81,10 @@ pub fn try_build<'de, A: MapAccess<'de>>(context: Context) -> Either<Result<Attr
         let doc_ref: Option<String> = keys.remove(KEY_DOC_REF);
 
         for key in keys.into_keys() {
-            return Either::Left(Err(Error::unknown_field(key, &[KEY_ID, KEY_DOC, "type"])));
+            return Left(Err(Error::unknown_field(key, &[KEY_ID, KEY_DOC, "type"])));
         }
 
-        return Either::Left(Ok(Attribute {
+        return Left(Ok(Attribute {
             id,
             doc,
             doc_ref,

@@ -1,9 +1,9 @@
 use either::Either;
-use serde::de::{self, MapAccess};
+use serde::de::{self, MapAccess, Error};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
-use super::{Attribute, Context, ContextNoContents, AttributeType, TypeAttributes};
+use super::{Attribute, Context, ContextNoContents, AttributeType, KEY_ID, KEY_DOC, KEY_DOC_REF};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -58,27 +58,37 @@ impl<'de> Deserialize<'de> for Bytes {
 }
 
 pub fn try_build<'de, A: MapAccess<'de>>(context: Context) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
-    if let Some(Either::Left(Bytes(contents))) = &context.type_attributes {
-        if let Some(id) = context.string_keys.get("id") {
-            let attribute = Attribute {
-                id: id.clone(),
-                doc: context.string_keys.get("doc").cloned(),
-                doc_ref: context.string_keys.get("doc-ref").cloned(),
-                type_: AttributeType::Contents(contents.clone()),
-            };
-
-            return Either::Left(Ok(attribute));
-        }
-    }
-
-    Either::Right(ContextNoContents {
-        string_keys: context.string_keys,
-        size: context.size,
-        type_: context.type_,
-        type_attributes: context.type_attributes.map(|attr| match attr {
-            Either::Left(_) => Either::Right(TypeAttributes { terminator: None }),
-            Either::Right(Either::Left(enum_attr)) => Either::Left(enum_attr),
-            Either::Right(Either::Right(type_attrs)) => Either::Right(type_attrs),
+    use Either::*;
+    let contents = match context.type_attributes {
+        Some(Left(Bytes(contents))) => contents,
+        Some(Right(value)) => return Right(ContextNoContents {
+            string_keys: context.string_keys,
+            size: context.size,
+            type_: context.type_,
+            type_attributes: Some(value),
         }),
-    })
+        None => return Right(ContextNoContents {
+            string_keys: context.string_keys,
+            size: context.size,
+            type_: context.type_,
+            type_attributes: None,
+        }),
+        };
+    
+        let mut keys = context.string_keys;
+        let id: Option<String> = keys.remove(KEY_ID);
+        let doc: Option<String> = keys.remove(KEY_DOC);
+        let doc_ref: Option<String> = keys.remove(KEY_DOC_REF);
+
+        for key in keys.into_keys() {
+            return Either::Left(Err(Error::unknown_field(key, &[KEY_ID, KEY_DOC, "type"])));
+        }
+
+        return Either::Left(Ok(Attribute {
+            id,
+            doc,
+            doc_ref,
+            type_: AttributeType::Contents(contents),
+        }));
+
 }

@@ -38,10 +38,7 @@ where
     };
     let name: String = enumeration.0;
     let mut keys = context.string_keys;
-    let id: String = match keys.remove(KEY_ID) {
-        Some(id) => id,
-        None => return Either::Left(Err(Error::missing_field(KEY_ID))),
-    };
+    let id: Option<String> = keys.remove(KEY_ID);
     let doc: Option<String> = keys.remove(KEY_DOC);
     let doc_ref: Option<String> = keys.remove(KEY_DOC_REF);
     for key in keys.into_keys() {

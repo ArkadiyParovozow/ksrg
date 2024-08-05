@@ -19,7 +19,7 @@ fn simple_de() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -29,6 +29,33 @@ fn simple_de() {
 
     assert_eq!(contents, vec![0xCA, 0xFE, 0xBA, 0xBE]);
 }
+
+#[test]
+fn without_id() {
+    let yaml = "
+            contents: JFIF
+            doc: example
+            doc-ref: ref1
+        ";
+    let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
+    let Attribute {
+        id,
+        doc,
+        doc_ref,
+        type_,
+    } = attribute;
+
+    assert_eq!(id, None);
+    assert_eq!(doc, Some("example".to_string()));
+    assert_eq!(doc_ref, Some("ref1".to_string()));
+    let contents = match type_ {
+        AttributeType::Contents(contents) => contents,
+        _ => unreachable!(),
+    };
+
+    assert_eq!(contents, b"JFIF".to_vec());
+}
+
 
 #[test]
 fn string_case() {
@@ -48,7 +75,7 @@ fn string_case() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -92,7 +119,7 @@ fn string_and_number_case() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -121,7 +148,7 @@ fn byte_and_number_case() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -150,7 +177,7 @@ fn extreme_example() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -186,7 +213,7 @@ fn simple_enum1() {
         "#;
     let deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
     let expect = Attribute {
-        id: String::from("id_1"),
+        id: Some(String::from("id_1")),
         doc_ref: None,
         doc: Some(String::from("My_doc")),
         type_: AttributeType::Enumeration(enumeration::Enumeration {
@@ -209,7 +236,7 @@ fn simple_enum2() {
         doc: My doc"#;
     let deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
     let expect = Attribute {
-        id: String::from("data1"),
+        id: Some(String::from("data1")),
         doc: Some(String::from("My doc")),
         doc_ref: None,
         type_: AttributeType::Enumeration(enumeration::Enumeration {

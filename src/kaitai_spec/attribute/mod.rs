@@ -25,7 +25,7 @@ pub enum AttributeType {
 
 #[derive(Debug, PartialEq)]
 struct Attribute {
-    id: String,
+    id: Option<String>,
     doc: Option<String>,
     doc_ref: Option<String>,
     type_: AttributeType,

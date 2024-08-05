@@ -1,12 +1,13 @@
 #[cfg(test)]
 mod tests;
+use either::Either;
 use serde::{
     de::{self, Error, MapAccess},
     Deserialize, Deserializer,
 };
-use std::{fmt, collections::HashMap};
-use either::Either;
+use std::{collections::HashMap, fmt};
 
+mod common;
 mod contents;
 mod enumeration;
 
@@ -67,12 +68,24 @@ struct ContextNoContents {
     type_attributes: Option<Either<Enumeration, TypeAttributes>>,
 }
 
+#[derive(Default)]
+struct ContextTypeAttributes {
+    // string keys such as 'id', '-orig-id', 'if', etc
+    string_keys: HashMap<&'static str, String>,
+    size: Option<Size>,
+    type_: Option<String>,
+    type_attributes: Option<TypeAttributes>,
+}
+
 fn build_attribute<'de, A: MapAccess<'de>>(context: Context) -> Result<Attribute, A::Error> {
     let context = match contents::try_build::<A>(context) {
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };
-
+    let context = match enumeration::try_build::<A>(context) {
+        Either::Left(result) => return result,
+        Either::Right(context) => context,
+    };
     todo!()
 }
 
@@ -102,7 +115,9 @@ impl<'de> Deserialize<'de> for Attribute {
                         match $key_next {
                             None => return build_attribute::<A>(context),
                             Some(key) if key == $key => {
-                                context.string_keys.insert($key, map.next_value::<String>()?);
+                                context
+                                    .string_keys
+                                    .insert($key, map.next_value::<String>()?);
 
                                 map.next_key::<&str>()?
                             }
@@ -153,11 +168,13 @@ impl<'de> Deserialize<'de> for Attribute {
                     Some(key) => {
                         if key == "enum" {
                             let name = map.next_value::<String>()?;
-                            context.type_attributes = Some(Either::Right(Either::Left(Enumeration(name))));
+                            context.type_attributes =
+                                Some(Either::Right(Either::Left(Enumeration(name))));
 
                             map.next_key::<&str>()?
                         } else if key == "contents" {
-                            context.type_attributes = Some(Either::Left(map.next_value::<contents::Bytes>()?));
+                            context.type_attributes =
+                                Some(Either::Left(map.next_value::<contents::Bytes>()?));
 
                             map.next_key::<&str>()?
                         } else {

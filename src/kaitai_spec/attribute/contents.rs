@@ -75,7 +75,6 @@ pub fn try_build<'de, A: MapAccess<'de>>(mut context: Context) -> Either<Result<
         }),
         };
     
-
         let id: Option<String> = context.string_keys.remove(KEY_ID);
         let doc: Option<String> = context.string_keys.remove(KEY_DOC);
         let doc_ref: Option<String> = context.string_keys.remove(KEY_DOC_REF);

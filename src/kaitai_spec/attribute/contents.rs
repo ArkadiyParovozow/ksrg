@@ -57,7 +57,7 @@ impl<'de> Deserialize<'de> for Bytes {
     }
 }
 
-pub fn try_build<'de, A: MapAccess<'de>>(context: Context) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
+pub fn try_build<'de, A: MapAccess<'de>>(mut context: Context) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
     use Either::*;
     let contents = match context.type_attributes {
         Some(Left(Bytes(contents))) => contents,

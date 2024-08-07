@@ -75,12 +75,12 @@ pub fn try_build<'de, A: MapAccess<'de>>(mut context: Context) -> Either<Result<
         }),
         };
     
-        let mut keys = context.string_keys;
-        let id: Option<String> = keys.remove(KEY_ID);
-        let doc: Option<String> = keys.remove(KEY_DOC);
-        let doc_ref: Option<String> = keys.remove(KEY_DOC_REF);
 
-        for key in keys.into_keys() {
+        let id: Option<String> = context.string_keys.remove(KEY_ID);
+        let doc: Option<String> = context.string_keys.remove(KEY_DOC);
+        let doc_ref: Option<String> = context.string_keys.remove(KEY_DOC_REF);
+
+        for key in context.string_keys.into_keys() {
             return Left(Err(Error::unknown_field(key, &[KEY_ID, KEY_DOC, "type"])));
         }
 

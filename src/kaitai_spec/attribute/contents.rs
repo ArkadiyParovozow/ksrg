@@ -1,9 +1,9 @@
 use either::Either;
-use serde::de::{self, MapAccess};
+use serde::de::{self, MapAccess, Error};
 use serde::{Deserialize, Deserializer};
 use std::fmt;
 
-use super::{Attribute, Context, ContextNoContents};
+use super::{Attribute, Context, ContextNoContents, AttributeType, KEY_ID, KEY_DOC, KEY_DOC_REF};
 
 #[derive(Debug, Deserialize)]
 #[serde(untagged)]
@@ -57,14 +57,37 @@ impl<'de> Deserialize<'de> for Bytes {
     }
 }
 
-pub fn try_build<'de, A: MapAccess<'de>>(
-    context: Context,
-) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
-    //ONLY TO COMPILE!! :TODO
-    return Either::Right(ContextNoContents {
-        string_keys: context.string_keys,
-        size: context.size,
-        type_: context.type_,
-        type_attributes: context.type_attributes.unwrap().right(),
-    });
+pub fn try_build<'de, A: MapAccess<'de>>(mut context: Context) -> Either<Result<Attribute, A::Error>, ContextNoContents> {
+    use Either::*;
+    let contents = match context.type_attributes {
+        Some(Left(Bytes(contents))) => contents,
+        Some(Right(value)) => return Right(ContextNoContents {
+            string_keys: context.string_keys,
+            size: context.size,
+            type_: context.type_,
+            type_attributes: Some(value),
+        }),
+        None => return Right(ContextNoContents {
+            string_keys: context.string_keys,
+            size: context.size,
+            type_: context.type_,
+            type_attributes: None,
+        }),
+        };
+    
+        let id: Option<String> = context.string_keys.remove(KEY_ID);
+        let doc: Option<String> = context.string_keys.remove(KEY_DOC);
+        let doc_ref: Option<String> = context.string_keys.remove(KEY_DOC_REF);
+
+        for key in context.string_keys.into_keys() {
+            return Left(Err(Error::unknown_field(key, &[KEY_ID, KEY_DOC, "type"])));
+        }
+
+        return Left(Ok(Attribute {
+            id,
+            doc,
+            doc_ref,
+            type_: AttributeType::Contents(contents),
+        }));
+
 }

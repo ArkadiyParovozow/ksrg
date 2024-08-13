@@ -22,7 +22,7 @@ const KEY_DOC_REF: &str = "doc-ref";
 pub enum AttributeType {
     Contents(Vec<u8>),
     Enumeration(enumeration::Enumeration),
-    Integer(common::Integer)
+    Integer(common::Integer),
 }
 
 #[derive(Debug, PartialEq)]
@@ -30,7 +30,7 @@ struct Attribute {
     id: Option<String>,
     doc: Option<String>,
     doc_ref: Option<String>,
-    type_: AttributeType,
+    type_: AttributeType, //TODO doc-ref??
 }
 
 #[derive(Debug, Deserialize)]

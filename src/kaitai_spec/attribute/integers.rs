@@ -1,29 +1,40 @@
-use super::common_types::IntType;
-pub fn process<'de, A>(
-    mut common_keys: super::CommonKeys,
-    mut map: A,
-) -> Result<super::Attribute, A::Error>
+use super::{
+    common::{type_parse, Integer},
+    Attribute, AttributeType, ContextTypeAttributes, KEY_DOC, KEY_DOC_REF, KEY_ID,
+};
+use either::Either;
+use serde::de::{Error, MapAccess};
+
+pub fn try_build<'de, A>(
+    context: ContextTypeAttributes,
+) -> Either<Result<Attribute, A::Error>, ContextTypeAttributes>
 where
-    A: serde::de::MapAccess<'de>,
+    A: MapAccess<'de>,
 {
-    while let Some(key) = map.next_key::<&str>()? {
-        if common_keys.process(key, &mut map)? {
-            continue;
-        }
-        return Err(serde::de::Error::unknown_field(key, &["nothing expected"]));
+    match context.type_attributes {
+        Some(_) => return Either::Right(context),
+        None => {}
+    };
+    let mut keys = context.string_keys;
+    let id: Option<String> = keys.remove(KEY_ID);
+    let doc: Option<String> = keys.remove(KEY_DOC);
+    let doc_ref: Option<String> = keys.remove(KEY_DOC_REF);
+    for key in keys.into_keys() {
+        return Either::Left(Err(Error::unknown_field(key, &[KEY_ID, KEY_DOC, "type"])));
     }
-    let type_unchecked: String = common_keys
-        .type_
-        .ok_or_else(|| serde::de::Error::missing_field("type"))?;
 
-    let type_: IntType = super::common_types::type_parse::<A>(type_unchecked)?;
-
-    Ok(super::Attribute {
-        id: common_keys
-            .id
-            .ok_or_else(|| serde::de::Error::missing_field("id"))?,
-        doc: common_keys.doc,
-        doc_ref: common_keys.doc_ref,
-        type_:super::AttributeType::Integer(type_),
-    })
+    let type_unchecked: String = match context.type_ {
+        Some(type_) => type_,
+        None => return Either::Left(Err(Error::missing_field("type"))),
+    };
+    let type_: Integer = match type_parse::<A>(&type_unchecked) {
+        Ok(type_) => type_,
+        Err(err) => return Either::Left(Err(err)),
+    };
+    return Either::Left(Ok(Attribute {
+        id,
+        doc,
+        doc_ref,
+        type_: AttributeType::Integer(type_),
+    }));
 }

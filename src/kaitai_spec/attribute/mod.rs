@@ -10,6 +10,7 @@ use std::{collections::HashMap, fmt};
 mod common;
 mod contents;
 mod enumeration;
+mod integers;
 
 const KEY_ID: &str = "id";
 const KEY_ORIG_ID: &str = "-orig-id";
@@ -21,6 +22,7 @@ const KEY_DOC_REF: &str = "doc-ref";
 pub enum AttributeType {
     Contents(Vec<u8>),
     Enumeration(enumeration::Enumeration),
+    Integer(common::Integer)
 }
 
 #[derive(Debug, PartialEq)]
@@ -83,6 +85,10 @@ fn build_attribute<'de, A: MapAccess<'de>>(context: Context) -> Result<Attribute
         Either::Right(context) => context,
     };
     let context = match enumeration::try_build::<A>(context) {
+        Either::Left(result) => return result,
+        Either::Right(context) => context,
+    };
+    let context = match integers::try_build::<A>(context) {
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };

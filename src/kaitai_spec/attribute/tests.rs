@@ -1,13 +1,13 @@
 use super::*;
-use crate::kaitai_spec;
+use common::{Endian, Integer, LongType};
 
 #[test]
 fn simple_de() {
     let yaml = "
             id: magic1
+            contents: [0xca, 0xfe, 0xba, 0xbe]
             doc: example
             doc-ref: ref1
-            contents: [0xca, 0xfe, 0xba, 0xbe]
         ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -19,7 +19,7 @@ fn simple_de() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -33,9 +33,9 @@ fn simple_de() {
 #[test]
 fn without_id() {
     let yaml = "
+            contents: JFIF
             doc: example
             doc-ref: ref1
-            contents: JFIF
         ";
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
     let Attribute {
@@ -45,7 +45,7 @@ fn without_id() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "");
+    assert_eq!(id, None);
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -56,13 +56,14 @@ fn without_id() {
     assert_eq!(contents, b"JFIF".to_vec());
 }
 
+
 #[test]
 fn string_case() {
     let yaml = "
         id: magic1
+        contents: JFIF
         doc: example
         doc-ref: ref1
-        contents: JFIF
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -74,7 +75,7 @@ fn string_case() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -89,9 +90,9 @@ fn string_case() {
 fn extra_field() {
     let yaml = "
         id: magic1
+        contents: JFIF
         doc: example
         doc-ref: ref1
-        contents: JFIF
         extra_field:
     ";
 
@@ -104,9 +105,9 @@ fn extra_field() {
 fn string_and_number_case() {
     let yaml = "
         id: magic1
+        contents: [CAFE, 0, BABE]
         doc: example
         doc-ref: ref1
-        contents: [CAFE, 0, BABE]
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -118,7 +119,7 @@ fn string_and_number_case() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -133,9 +134,9 @@ fn string_and_number_case() {
 fn byte_and_number_case() {
     let yaml = "
         id: magic1
+        contents: [foo, 0, A, 0xa, 42]
         doc: example
         doc-ref: ref1
-        contents: [foo, 0, A, 0xa, 42]
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -147,7 +148,7 @@ fn byte_and_number_case() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -162,9 +163,9 @@ fn byte_and_number_case() {
 fn extreme_example() {
     let yaml = "
         id: magic1
+        contents: [1, 0x55, '▒,3', 3]
         doc: example
         doc-ref: ref1
-        contents: [1, 0x55, '▒,3', 3]
     ";
 
     let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
@@ -176,7 +177,7 @@ fn extreme_example() {
         type_,
     } = attribute;
 
-    assert_eq!(id, "magic1");
+    assert_eq!(id, Some("magic1".to_string()));
     assert_eq!(doc, Some("example".to_string()));
     assert_eq!(doc_ref, Some("ref1".to_string()));
     let contents = match type_ {
@@ -191,10 +192,10 @@ fn extreme_example() {
 fn duplicate_contents() {
     let yaml = "
             id: magic1
+            contents: JFIF
+            contents: JFIF
             doc: example
             doc-ref: ref1
-            contents: JFIF
-            contents: JFIF
         ";
 
     let result: Result<Attribute, _> = serde_yaml::from_str(yaml);
@@ -208,21 +209,22 @@ fn simple_enum1() {
         id: id_1
         type: u2le
         enum: ip_prot
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+        doc: My_doc
+        "#;
+    let deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
     let expect = Attribute {
-        id: String::from("id_1"),
+        id: Some(String::from("id_1")),
         doc_ref: None,
-        doc: Some(String::from("My doc")),
+        doc: Some(String::from("My_doc")),
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
-            type_: common_types::IntType::Long {
-                type_: common_types::LongType::U2,
-                endian: Some(common_types::Endian::Little),
+            type_: Integer::Long {
+                type_: LongType::U2,
+                endian: Some(Endian::Little),
             },
         }),
     };
-    assert_eq!(_deserialized, expect);
+    assert_eq!(deserialized, expect);
 }
 
 #[test]
@@ -232,92 +234,37 @@ fn simple_enum2() {
         type: s1
         enum: ip_prot
         doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
     let expect = Attribute {
-        id: String::from("data1"),
+        id: Some(String::from("data1")),
         doc: Some(String::from("My doc")),
         doc_ref: None,
         type_: AttributeType::Enumeration(enumeration::Enumeration {
             name: String::from("ip_prot"),
-            type_: common_types::IntType::S1,
+            type_: Integer::S1,
         }),
     };
-    assert_eq!(_deserialized, expect);
+    assert_eq!(deserialized, expect);
 }
 
 #[test]
-#[should_panic]
 fn incorrect_type_enum1() {
     let str: &str = r#"
         id: birth_year
         enum: MA1
         type: incorrect
         doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
+    assert!(deserialized.is_err())
 }
 
 #[test]
-#[should_panic]
 fn incorrect_type_enum2() {
     let str: &str = r#"
         id: birth_year
         enum: MA1
         type: u2lee
         doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
-}
-
-#[test]
-fn simple_int1() {
-    let str: &str = r#"
-        id: id_1
-        type: u2le
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
-    let expect = Attribute {
-        id: String::from("id_1"),
-        doc_ref: None,
-        doc: Some(String::from("My doc")),
-        type_: AttributeType::Integer(common_types::IntType::Long {
-            type_: common_types::LongType::U2,
-            endian: Some(common_types::Endian::Little),
-        }),
-    };
-    assert_eq!(_deserialized, expect);
-}
-
-#[test]
-fn simple_int2() {
-    let str: &str = r#"
-        id: data1
-        type: s1
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
-    let expect = Attribute {
-        id: String::from("data1"),
-        doc_ref: None,
-        doc: Some(String::from("My doc")),
-        type_: AttributeType::Integer(common_types::IntType::S1),
-    };
-    assert_eq!(_deserialized, expect);
-}
-
-#[test]
-#[should_panic]
-fn incorrect_type_int1() {
-    let str: &str = r#"
-        id: birth_year
-        type: incorrect
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
-}
-
-#[test]
-#[should_panic]
-fn incorrect_type_int2() {
-    let str: &str = r#"
-        id: birth_year
-        type: u2lee
-        doc: My doc"#;
-    let _deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
+    assert!(deserialized.is_err())
 }

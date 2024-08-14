@@ -10,6 +10,7 @@ use std::{collections::HashMap, fmt};
 mod common;
 mod contents;
 mod enumeration;
+mod string;
 
 const KEY_ID: &str = "id";
 const KEY_ORIG_ID: &str = "-orig-id";
@@ -21,6 +22,7 @@ const KEY_DOC_REF: &str = "doc-ref";
 pub enum AttributeType {
     Contents(Vec<u8>),
     Enumeration(enumeration::Enumeration),
+    String(string::StringType),
 }
 
 #[derive(Debug, PartialEq)]
@@ -38,7 +40,8 @@ pub enum StringOrU64<'a> {
     U64(u64),
 }
 
-enum Size {
+#[derive(Debug, PartialEq)]
+pub enum Size {
     Number(u64),
     Expression(String),
     EndOfStream(bool),
@@ -48,6 +51,9 @@ struct Enumeration(String);
 
 struct TypeAttributes {
     terminator: Option<u8>,
+    consume: Option<bool>,
+    include: Option<bool>,
+    encoding: Option<String>,
 }
 
 #[derive(Default)]
@@ -86,6 +92,12 @@ fn build_attribute<'de, A: MapAccess<'de>>(context: Context) -> Result<Attribute
         Either::Left(result) => return result,
         Either::Right(context) => context,
     };
+
+    let context = match string::try_build::<A>(context) {
+        Either::Left(result) => return result,
+        Either::Right(context) => context,
+    };
+
     todo!()
 }
 
@@ -162,6 +174,13 @@ impl<'de> Deserialize<'de> for Attribute {
                     maybe_key => maybe_key,
                 };
 
+                let mut type_attrs = TypeAttributes {
+                    terminator: None,
+                    consume: None,
+                    include: None,
+                    encoding: None,
+                };
+
                 // "enum"/"contents" or other type (array) attributes
                 let key_next = match key_next {
                     None => return build_attribute::<A>(context),
@@ -177,8 +196,35 @@ impl<'de> Deserialize<'de> for Attribute {
                                 Some(Either::Left(map.next_value::<contents::Bytes>()?));
 
                             map.next_key::<&str>()?
-                        } else {
-                            // all other possible keys
+                        } else if key == "terminator" {
+                            if context.type_ == Some("strz".to_string()) {
+                                return Err(de::Error::custom("Unexpected value for context.type_: 'strz'"));
+                            }
+                            type_attrs.terminator = Some(map.next_value::<u8>()?);
+
+                            context.type_attributes = Some(Either::Right(Either::Right(type_attrs)));
+
+                            map.next_key::<&str>()?
+                        } else if key == "include" {
+                            type_attrs.include = Some(map.next_value::<bool>()?);
+
+                            context.type_attributes = Some(Either::Right(Either::Right(type_attrs)));
+                            
+                            map.next_key::<&str>()?
+                        } else if key == "consume" {
+                            type_attrs.consume = Some(map.next_value::<bool>()?);
+
+                            context.type_attributes = Some(Either::Right(Either::Right(type_attrs)));
+                            
+                            map.next_key::<&str>()?
+                        } else if key == "encoding" {
+                            type_attrs.encoding = Some(map.next_value::<String>()?);
+
+                            context.type_attributes = Some(Either::Right(Either::Right(type_attrs)));
+                            
+                            map.next_key::<&str>()?
+                        }
+                          else {
                             Some(key)
                         }
                     }

@@ -268,3 +268,68 @@ fn incorrect_type_enum2() {
     let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
     assert!(deserialized.is_err())
 }
+
+#[test]
+fn simple_string() {
+    let yaml = "
+            id: name
+            size: 24
+            type: str 
+            encoding: UTF-8
+        ";
+    let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
+    let expect = Attribute {
+        id: Some(String::from("name")),
+        doc_ref: None,
+        doc: None,
+        type_: AttributeType::String(string::StringType {
+            value: String::from("str"),
+            terminator: None,
+            size: Some(Size::Number(24)),
+            consume: None,
+            include: None,
+            encoding: Some(String::from("UTF-8")),
+        }),
+    };
+    assert_eq!(attribute, expect);
+}
+
+#[test]
+fn strz_test() {
+    let yaml = "
+            id: name
+            size: 24
+            type: strz 
+            encoding: UTF-8
+        ";
+    let attribute: Attribute = serde_yaml::from_str(yaml).unwrap();
+    let expect = Attribute {
+        id: Some(String::from("name")),
+        doc_ref: None,
+        doc: None,
+        type_: AttributeType::String(string::StringType {
+            value: String::from("strz"),
+            terminator: Some(0),
+            size: Some(Size::Number(24)),
+            consume: None,
+            include: None,
+            encoding: Some(String::from("UTF-8")),
+        }),
+    };
+    assert_eq!(attribute, expect);
+}
+
+#[test]
+fn strz_with_terminator() {
+    let yaml = "
+            id: name
+            size: 24
+            type: strz
+            terminator: 10 
+            encoding: UTF-8
+        ";
+
+    let result: Result<Attribute, _> = serde_yaml::from_str(yaml);
+
+    assert!(result.is_err());
+}

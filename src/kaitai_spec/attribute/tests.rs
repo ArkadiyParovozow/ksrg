@@ -56,7 +56,6 @@ fn without_id() {
     assert_eq!(contents, b"JFIF".to_vec());
 }
 
-
 #[test]
 fn string_case() {
     let yaml = "
@@ -263,6 +262,62 @@ fn incorrect_type_enum2() {
     let str: &str = r#"
         id: birth_year
         enum: MA1
+        type: u2lee
+        doc: My doc"#;
+    let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
+    assert!(deserialized.is_err())
+}
+
+#[test]
+fn simple_int1() {
+    let str: &str = r#"
+        id: id_1
+        type: u2le
+        doc: My_doc
+        "#;
+    let deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let expect = Attribute {
+        id: Some(String::from("id_1")),
+        doc_ref: None,
+        doc: Some(String::from("My_doc")),
+        type_: AttributeType::Integer(Integer::Long {
+            type_: LongType::U2,
+            endian: Some(Endian::Little),
+        }),
+    };
+    assert_eq!(deserialized, expect);
+}
+
+#[test]
+fn simple_int2() {
+    let str: &str = r#"
+        id: data1
+        type: s1
+        doc: My doc"#;
+    let deserialized: Attribute = serde_yaml::from_str(str).expect("Failed!");
+    let expect = Attribute {
+        id: Some(String::from("data1")),
+        doc: Some(String::from("My doc")),
+        doc_ref: None,
+        type_: AttributeType::Integer(Integer::S1),
+    };
+    assert_eq!(deserialized, expect);
+}
+
+#[test]
+fn incorrect_type_int1() {
+    let str: &str = r#"
+        id: birth_year
+        type: incorrect
+        doc: My doc"#;
+    let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
+    assert!(deserialized.is_err())
+}
+
+#[test]
+fn incorrect_type_int2() {
+    let str: &str = r#"
+        id: birth_year
         type: u2lee
         doc: My doc"#;
     let deserialized: Result<Attribute, _> = serde_yaml::from_str(str);
